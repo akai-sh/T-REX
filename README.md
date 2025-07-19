@@ -4,7 +4,7 @@ This repo provides the code for reproducing the experiments in T-REX, which teac
 ```
 conda create -n llmexecutor python=3.9
 conda activate llmexecutor
-cd LLMExecutor
+cd T-REX
 pip install -r requirements.txt
 ```
 ## prepare data
