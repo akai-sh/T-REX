@@ -34,7 +34,7 @@ python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --da
 # Qwen2.5-Coder-14b
 python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
-## ASE testing
+## Predicting execution semantics
 ### Base Models
 ```bash
 declare -A model_paths=([codellama_7b]="meta-llama/CodeLlama-7b-Instruct-hf" [codellama_13b]="meta-llama/CodeLlama-13b-Instruct-hf" [qwen_7b]="Qwen/Qwen2.5-Coder-7B-Instruct" [qwen_14b]="Qwen/Qwen2.5-Coder-14B-Instruct")
@@ -55,7 +55,7 @@ for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
   done
 done
 ```
-## Prefix-match and CRMs testing
+## Predicting runtime behaviors 
 ### Base Models
 ```bash
 declare -A model_paths=(  ["codellama_7b"]="meta-llama/CodeLlama-7b-Instruct-hf"  ["codellama_13b"]="meta-llama/CodeLlama-13b-Instruct-hf"  ["qwen_7b"]="Qwen/Qwen2.5-Coder-7B-Instruct"  ["qwen_14b"]="Qwen/Qwen2.5-Coder-14B-Instruct")
