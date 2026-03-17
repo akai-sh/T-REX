@@ -56,10 +56,8 @@ done
 ```
 ## RQ3 Static Detection of Runtime Errors
 ```bash
-python SIPA_excep.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Excep_dect/qwen_14b_sft_excep"   --data_path "./../../data/test/Excep_dect/excep.jsonl"   --variant "sft"
-      python calculate_excep_results.py   --result_path "./../../results/Excep_dect/qwen_14b_sft_excep/results.jsonl"
-python SIPA_excep.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Excep_dect/qwen_14b_sft_n_excep"   --data_path "./../../data/test/Excep_dect/n_excep.jsonl"   --variant "sft"
-      python calculate_excep_results.py   --result_path "./../../results/Excep_dect/qwen_14b_sft_n_excep/results.jsonl"
+cd Excep_dect
+python exception_dect.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --excep_data "./../../data/test/Excep_dect/excep.jsonl" --n_excep_data "./../../data/test/Excep_dect/n_excep.jsonl"
 ```
 
 ## RQ4 Aiding Debugging
