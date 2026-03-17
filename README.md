@@ -47,7 +47,7 @@ python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --da
 python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
 ## RQ1 Predicting execution semantics
-### commend
+### command
 ```bash
 for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
   for dataset in "codenetmut" "humaneval"; do
@@ -64,7 +64,7 @@ done
 
 
 ## RQ2 and RQ5 Predicting runtime behaviors 
-### commend
+### command
 ```bash
   for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
     for dataset in "codenetmut" "humaneval"; do
@@ -80,7 +80,7 @@ done
 
 
 ## RQ3 Static Detection of Runtime Errors
-### commend
+### command
 ```bash
 cd Excep_dect
 python exception_dect.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --excep_data "./../../data/test/Excep_dect/excep.jsonl" --n_excep_data "./../../data/test/Excep_dect/n_excep.jsonl"
@@ -89,7 +89,7 @@ python exception_dect.py   --executor_model_path "./../../fine_tuned_models/qwen
 <img width="286" height="141" alt="image" src="https://github.com/user-attachments/assets/2faadc7a-fcf2-4ab8-9d7b-37986660483d" />
 
 ## RQ4 Aiding Debugging
-### commend
+### command
 ```bash
 python SIPA.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Bug_dect/qwen_14b_sft_buggy"   --data_path "./../../data/test/Bug_dect/buggy.jsonl"   --variant "sft"
 ```
