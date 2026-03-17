@@ -63,5 +63,4 @@ python exception_dect.py   --executor_model_path "./../../fine_tuned_models/qwen
 ## RQ4 Aiding Debugging
 ```bash
 python SIPA.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Bug_dect/qwen_14b_sft_buggy"   --data_path "./../../data/test/Bug_dect/buggy.jsonl"   --variant "sft"
-      python calculate_buggy_results.py   --result_path "./../../results/Bug_dect/qwen_14b_sft_buggy/results.jsonl"
 ```
