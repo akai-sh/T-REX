@@ -59,6 +59,8 @@ for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
 done
 ```
 ### results
+<img width="561" height="227" alt="image" src="https://github.com/user-attachments/assets/9cb69b27-c3ac-4a55-b33f-f6c648e38da8" />
+<img width="561" height="189" alt="image" src="https://github.com/user-attachments/assets/1379e3ae-6cc8-469e-af33-1209bfd02cdb" />
 
 
 ## RQ2 and RQ5 Predicting runtime behaviors 
@@ -72,15 +74,24 @@ done
   done
 ```
 ### results
+<img width="561" height="174" alt="image" src="https://github.com/user-attachments/assets/552b4c3b-3a6d-45df-9bf3-129235398b92" />
+<img width="561" height="228" alt="image" src="https://github.com/user-attachments/assets/6b8b4233-4582-4cd1-b6cf-cdd267201070" />
+<img width="561" height="228" alt="image" src="https://github.com/user-attachments/assets/30f9069f-54ee-4d00-938d-73c429e46b6c" />
 
 
 ## RQ3 Static Detection of Runtime Errors
+### commend
 ```bash
 cd Excep_dect
 python exception_dect.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --excep_data "./../../data/test/Excep_dect/excep.jsonl" --n_excep_data "./../../data/test/Excep_dect/n_excep.jsonl"
 ```
+### results
+<img width="286" height="141" alt="image" src="https://github.com/user-attachments/assets/2faadc7a-fcf2-4ab8-9d7b-37986660483d" />
 
 ## RQ4 Aiding Debugging
+### commend
 ```bash
 python SIPA.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Bug_dect/qwen_14b_sft_buggy"   --data_path "./../../data/test/Bug_dect/buggy.jsonl"   --variant "sft"
 ```
+### results
+<img width="286" height="114" alt="image" src="https://github.com/user-attachments/assets/2d34629e-92ee-4ccd-bfa2-df35f2eb4b84" />
