@@ -9,6 +9,18 @@ pip install -r requirements.txt
 ```
 ## prepare data
 Please download the dataset from [here](https://drive.google.com/drive/folders/1mdfxpxl_PNjpo_cbHBQlQ7tQLmfJW55W?usp=drive_link) and place the `data` folder inside the `T-REX` folder 
+
+**Table 1.** Statistics of statement and exception types in the training data.
+
+| **Statement Types** | **%** | **Exception Types** | **%** |
+|---|---|---|---|
+| Variable Assignment (S₂) | 32.70% | TypeError | 16.50% |
+| Expression (S₁) | 23.80% | ZeroDivisionError | 16.21% |
+| If Statement (S₃) | 18.70% | NameError | 15.99% |
+| For/While Loop (S₄) | 16.93% | IndexError | 15.42% |
+| Method Calls (S₅) | 7.87% | KeyError | 14.94% |
+| | | ValueError | 13.16% |
+| | | UnboundLocalError | 7.78% |
 ## Training
 We have fine-tuned: `meta-llama/CodeLlama-7b-Instruct-hf`, `meta-llama/CodeLlama-13b-Instruct-hf`, `Qwen/Qwen2.5-Coder-7B-Instruct`, `Qwen/Qwen2.5-Coder-14B-Instruct`
 ### SFT
@@ -35,6 +47,7 @@ python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --da
 python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
 ## RQ1 Predicting execution semantics
+### commend
 ```bash
 for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
   for dataset in "codenetmut" "humaneval"; do
@@ -45,7 +58,11 @@ for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
   done
 done
 ```
+### results
+
+
 ## RQ2 and RQ5 Predicting runtime behaviors 
+### commend
 ```bash
   for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
     for dataset in "codenetmut" "humaneval"; do
@@ -54,6 +71,9 @@ done
     done
   done
 ```
+### results
+
+
 ## RQ3 Static Detection of Runtime Errors
 ```bash
 cd Excep_dect
