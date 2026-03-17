@@ -34,40 +34,18 @@ python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --da
 # Qwen2.5-Coder-14b
 python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
-## Predicting execution semantics
-### Base Models
-```bash
-declare -A model_paths=([codellama_7b]="meta-llama/CodeLlama-7b-Instruct-hf" [codellama_13b]="meta-llama/CodeLlama-13b-Instruct-hf" [qwen_7b]="Qwen/Qwen2.5-Coder-7B-Instruct" [qwen_14b]="Qwen/Qwen2.5-Coder-14B-Instruct")
-
-for model in "${!model_paths[@]}"; do
-  for dataset in "codenetmut" "humaneval"; do
-    python run_executor.py --executor_model_path "${model_paths[$model]}" --results_path "./../../results/ASE/${model}_base_${dataset}.jsonl" --data_path "./../../data/test/ASE/${dataset}.jsonl" 
-    python calculate_ASE.py --results_path "./../../results/ASE/${model}_base_${dataset}.jsonl"
-  done
-done
-```
-### SFT
+## RQ1 Predicting execution semantics
 ```bash
 for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
   for dataset in "codenetmut" "humaneval"; do
     python run_executor.py   --executor_model_path "./../../fine_tuned_models/${model}_sft/checkpoint_xx"   --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"   --data_path "./../../data/test/ASE/${dataset}.jsonl"
     python calculate_ASE.py --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"
+    python calculate_NS_PS.py --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"
+    python calculate_stratify_results.py --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"
   done
 done
 ```
-## Predicting runtime behaviors 
-### Base Models
-```bash
-declare -A model_paths=(  ["codellama_7b"]="meta-llama/CodeLlama-7b-Instruct-hf"  ["codellama_13b"]="meta-llama/CodeLlama-13b-Instruct-hf"  ["qwen_7b"]="Qwen/Qwen2.5-Coder-7B-Instruct"  ["qwen_14b"]="Qwen/Qwen2.5-Coder-14B-Instruct")
-
-for model in "${!model_paths[@]}"; do
-  for dataset in "codenetmut" "humaneval"; do
-    python SIPA.py   --executor_model_path "${model_paths[$model]}"   --results_path "./../../results/PM_CRMs/${model}_base_${dataset}"   --data_path "./../../data/test/PM_CRMs/${dataset}.jsonl"   --variant sft
-    python calculate_CRMs.py  --result_path "./../../results/PM_CRMs/${model}_base_${dataset}/results.jsonl"
-  done
-done
-```
-### SFT
+## RQ2 and RQ5 Predicting runtime behaviors 
 ```bash
   for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
     for dataset in "codenetmut" "humaneval"; do
@@ -75,4 +53,17 @@ done
       python calculate_CRMs.py   --result_path "./../../results/PM_CRMs/${model}_sft_${dataset}/results.jsonl"
     done
   done
+```
+## RQ3 Static Detection of Runtime Errors
+```bash
+python SIPA_excep.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Excep_dect/qwen_14b_sft_excep"   --data_path "./../../data/test/Excep_dect/excep.jsonl"   --variant "sft"
+      python calculate_excep_results.py   --result_path "./../../results/Excep_dect/qwen_14b_sft_excep/results.jsonl"
+python SIPA_excep.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Excep_dect/qwen_14b_sft_n_excep"   --data_path "./../../data/test/Excep_dect/n_excep.jsonl"   --variant "sft"
+      python calculate_excep_results.py   --result_path "./../../results/Excep_dect/qwen_14b_sft_n_excep/results.jsonl"
+```
+
+## RQ4 Aiding Debugging
+```bash
+python SIPA.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Bug_dect/qwen_14b_sft_buggy"   --data_path "./../../data/test/Bug_dect/buggy.jsonl"   --variant "sft"
+      python calculate_buggy_results.py   --result_path "./../../results/Bug_dect/qwen_14b_sft_buggy/results.jsonl"
 ```
