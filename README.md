@@ -1,4 +1,4 @@
-# T-REX
+<img width="468" height="25" alt="image" src="https://github.com/user-attachments/assets/d03ac70a-d31d-41e9-bbd1-f226b6ee011a" /># T-REX
 This repo provides the code for reproducing the experiments in T-REX, which teaching Large Language Models to reason about program execution
 ## prepare environments
 ```
@@ -107,25 +107,34 @@ You can load these checkpoints directly from Hugging Face or fine-tune the model
 ```
 cd train/Executor
 # process data
-python process_data_codellama.py --data_path ./../../data/train/Executor/sft.jsonl --save_path ./../../data/train/Executor/dataset_codellama
+python process_data_codellama.py --data_path ./../../data/train/sft.jsonl --save_path ./../../data/train/dataset_codellama
 # CodeLlama-7b
-python train_codellama.py --output_dir ./../../fine_tuned_models/codellama_7b_sft --config_name meta-llama/CodeLlama-7b-Instruct-hf --tokenizer_name meta-llama/CodeLlama-7b-Instruct-hf --model_name_or_path meta-llama/CodeLlama-7b-Instruct-hf --max_target_length 1024 --max_source_length 1024 --pad_to_max_length true --do_train true --learning_rate 1e-5 --lr_scheduler_type cosine --logging_steps 2 --num_train_epochs 3 --save_steps 1000 --per_device_train_batch_size 3 --overwrite_output_dir false --train_data ./../../data/train/Executor/dataset_codellama
+python train_codellama.py --output_dir ./../../fine_tuned_models/codellama_7b_sft --config_name meta-llama/CodeLlama-7b-Instruct-hf --tokenizer_name meta-llama/CodeLlama-7b-Instruct-hf --model_name_or_path meta-llama/CodeLlama-7b-Instruct-hf --max_target_length 1024 --max_source_length 1024 --pad_to_max_length true --do_train true --learning_rate 1e-5 --lr_scheduler_type cosine --logging_steps 2 --num_train_epochs 3 --save_steps 1000 --per_device_train_batch_size 3 --overwrite_output_dir false --train_data ./../../data/train/dataset_codellama
 # CodeLlama-13b
-python train_codellama.py --output_dir ./../../fine_tuned_models/codellama_13b_sft --config_name meta-llama/CodeLlama-13b-Instruct-hf --tokenizer_name meta-llama/CodeLlama-13b-Instruct-hf --model_name_or_path meta-llama/CodeLlama-13b-Instruct-hf --max_target_length 1024 --max_source_length 1024 --pad_to_max_length true --do_train true --learning_rate 1e-5 --lr_scheduler_type cosine --logging_steps 2 --num_train_epochs 3 --save_steps 1000 --per_device_train_batch_size 3 --overwrite_output_dir false --train_data ./../../data/train/Executor/dataset_codellama
+python train_codellama.py --output_dir ./../../fine_tuned_models/codellama_13b_sft --config_name meta-llama/CodeLlama-13b-Instruct-hf --tokenizer_name meta-llama/CodeLlama-13b-Instruct-hf --model_name_or_path meta-llama/CodeLlama-13b-Instruct-hf --max_target_length 1024 --max_source_length 1024 --pad_to_max_length true --do_train true --learning_rate 1e-5 --lr_scheduler_type cosine --logging_steps 2 --num_train_epochs 3 --save_steps 1000 --per_device_train_batch_size 3 --overwrite_output_dir false --train_data ./../../data/train/dataset_codellama
 ```
 
 ### Qwen2.5-Coder:
 ```
 # process data
-python process_data_qwen.py --data_path ./../../data/train/Executor/sft.jsonl --save_path ./../../data/train/Executor/sft_formated_qwen.jsonl
-python binarize_data.py --input_path ./../../data/train/Executor/sft_formated_qwen.jsonl --output_path ./../../data/train/Executor/sft_processed_qwen.jsonl
+python process_data_qwen.py --data_path ./../../data/train/sft.jsonl --save_path ./../../data/train/sft_formated_qwen.jsonl
+python binarize_data.py --input_path ./../../data/train/sft_formated_qwen.jsonl --output_path ./../../data/train/sft_processed_qwen.jsonl --tokenizer_path Qwen/Qwen2.5-Coder-14B-Instruct
 # Qwen2.5-Coder-7b
-python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_7b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True
+python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_7b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --eval_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True
 # Qwen2.5-Coder-14b
-python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
+python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    -- "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
-## RQ1 Predicting execution semantics
-### command
+## Evaluation Instructions 
+### Predicting execution semantics
+take qwen14b and codenetmut dataset as example:
+```bash
+cd test/execution_semantics
+mkdir -p ../../results/execution_semantics
+python run_executor.py   --executor_model_path ling031001/T-REX-qwen2.5-coder-14b   --results_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"   --data_path "./../../data/test/execution_semantics/codenetmut.jsonl"
+python calculate_ASE.py --result_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"
+python calculate_NS_PS.py --result_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"
+python calculate_stratify_results.py --result_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"
+```
 ```bash
 for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
   for dataset in "codenetmut" "humaneval"; do
