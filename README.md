@@ -14,6 +14,17 @@ Please download the dataset from [here](https://drive.google.com/drive/folders/1
 
 We provide a lightweight smoke test to verify that the artifact is installed correctly and that the T-REX executor produces the expected result.
 
+### Running the Test
+
+Run the smoke test from the project root directory:
+
+```bash
+python test/kick_the_tires.py \
+  --executor_model_path ling031001/T-REX-qwen2.5-coder-14b
+```
+
+> **Note:** The executor model will be downloaded from Hugging Face automatically if it is not already available locally.
+
 ### Test Example
 
 The smoke test uses the following program:
