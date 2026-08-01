@@ -1,5 +1,5 @@
 # T-REX
-This repo provides the code for reproducing the experiments in T-REX, which teaching Large Language Models to reason about program execution
+This repo provides the code for reproducing the main experiments in T-REX, which teaching Large Language Models to reason about program execution
 ## prepare environments
 ```
 conda create -n llmexecutor python=3.9
@@ -124,6 +124,7 @@ python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct   
 # Qwen2.5-Coder-14b
 python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    -- "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
+
 ## Evaluation Instructions 
 ### Predicting Execution Semantics
 
@@ -148,8 +149,6 @@ The script reports the following metrics:
 
 - **Table 2:** `A_NS` (next-statement accuracy), `A_PS` (program-state accuracy), and `A_NS+PS` (joint accuracy).
 - **Table 3:** `S1` (expressions), `S2` (variable assignments), `Seq.` (sequential/completion flow), `S3` (if-statements), `S4` (for/while-statements), `S5` (method calls), and `Branch` (branch flow).
-
-The executor uses sampling with `temperature=0.8`. Therefore, results may vary across runs and may not exactly match those reported in the paper.
 
 
 ### Predicting Runtime Behaviors
