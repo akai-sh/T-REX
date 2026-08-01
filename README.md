@@ -10,21 +10,26 @@ pip install -r requirements.txt
 ## prepare data
 Please download the dataset from [here](https://drive.google.com/drive/folders/1mdfxpxl_PNjpo_cbHBQlQ7tQLmfJW55W?usp=drive_link) and place the `data` folder inside the `T-REX` folder 
 
-**Table 1.** Statistics of statement and exception types in the training data.
+## kick-the-tires Test
 
-| **Statement Types** | **%** | **Exception Types** | **%** |
-|---|---|---|---|
-| Variable Assignment (S₂) | 32.70% | TypeError | 16.50% |
-| Expression (S₁) | 23.80% | ZeroDivisionError | 16.21% |
-| If Statement (S₃) | 18.70% | NameError | 15.99% |
-| For/While Loop (S₄) | 16.93% | IndexError | 15.42% |
-| Method Calls (S₅) | 7.87% | KeyError | 14.94% |
-| | | ValueError | 13.16% |
-| | | UnboundLocalError | 7.78% |
 ## Training
-We have fine-tuned: `meta-llama/CodeLlama-7b-Instruct-hf`, `meta-llama/CodeLlama-13b-Instruct-hf`, `Qwen/Qwen2.5-Coder-7B-Instruct`, `Qwen/Qwen2.5-Coder-14B-Instruct`
-### SFT
-#### CodeLlama:
+
+We fine-tuned the following models:
+
+- `meta-llama/CodeLlama-7b-Instruct-hf`
+- `meta-llama/CodeLlama-13b-Instruct-hf`
+- `Qwen/Qwen2.5-Coder-7B-Instruct`
+- `Qwen/Qwen2.5-Coder-14B-Instruct`
+
+The fine-tuned checkpoints are available on Hugging Face:
+
+- [`ling031001/T-REX-qwen2.5-coder-14b`](https://huggingface.co/ling031001/T-REX-qwen2.5-coder-14b)
+- [`ling031001/T-REX-qwen2.5-coder-7b`](https://huggingface.co/ling031001/T-REX-qwen2.5-coder-7b)
+- [`ling031001/T-REX-codellama-7b`](https://huggingface.co/ling031001/T-REX-codellama-7b)
+- [`ling031001/T-REX-codellama-13b`](https://huggingface.co/ling031001/T-REX-codellama-13b)
+
+You can load these checkpoints directly from Hugging Face or fine-tune the models yourself using the following command:
+### CodeLlama:
 
 ```
 cd train/Executor
@@ -36,15 +41,15 @@ python train_codellama.py --output_dir ./../../fine_tuned_models/codellama_7b_sf
 python train_codellama.py --output_dir ./../../fine_tuned_models/codellama_13b_sft --config_name meta-llama/CodeLlama-13b-Instruct-hf --tokenizer_name meta-llama/CodeLlama-13b-Instruct-hf --model_name_or_path meta-llama/CodeLlama-13b-Instruct-hf --max_target_length 1024 --max_source_length 1024 --pad_to_max_length true --do_train true --learning_rate 1e-5 --lr_scheduler_type cosine --logging_steps 2 --num_train_epochs 3 --save_steps 1000 --per_device_train_batch_size 3 --overwrite_output_dir false --train_data ./../../data/train/Executor/dataset_codellama
 ```
 
-#### Qwen2.5-Coder:
+### Qwen2.5-Coder:
 ```
 # process data
 python process_data_qwen.py --data_path ./../../data/train/Executor/sft.jsonl --save_path ./../../data/train/Executor/sft_formated_qwen.jsonl
 python binarize_data.py --input_path ./../../data/train/Executor/sft_formated_qwen.jsonl --output_path ./../../data/train/Executor/sft_processed_qwen.jsonl
 # Qwen2.5-Coder-7b
-python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_7b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True
+python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_7b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True
 # Qwen2.5-Coder-14b
-python train.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
+python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/Executor/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --evaluation_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "tensorboard"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
 ## RQ1 Predicting execution semantics
 ### command
