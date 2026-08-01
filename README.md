@@ -152,7 +152,6 @@ The script reports the following metrics:
 The executor uses sampling with `temperature=0.8`. Therefore, results may vary across runs and may not exactly match those reported in the paper.
 
 
-### command Predicting runtime behaviors 
 ### Predicting Runtime Behaviors
 
 The following example evaluates the Qwen2.5-Coder-14B executor on the CodeNetMut dataset.
