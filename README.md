@@ -1,4 +1,4 @@
-<img width="468" height="25" alt="image" src="https://github.com/user-attachments/assets/d03ac70a-d31d-41e9-bbd1-f226b6ee011a" /># T-REX
+# T-REX
 This repo provides the code for reproducing the experiments in T-REX, which teaching Large Language Models to reason about program execution
 ## prepare environments
 ```
@@ -102,8 +102,8 @@ The fine-tuned checkpoints are available on Hugging Face:
 - [`ling031001/T-REX-codellama-13b`](https://huggingface.co/ling031001/T-REX-codellama-13b)
 
 You can load these checkpoints directly from Hugging Face or fine-tune the models yourself using the following command:
-### CodeLlama:
 
+### CodeLlama:
 ```
 cd train/Executor
 # process data
@@ -125,60 +125,56 @@ python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct   
 python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    -- "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
 ## Evaluation Instructions 
-### Predicting execution semantics
-take qwen14b and codenetmut dataset as example:
+### Predicting Execution Semantics
+
+The following example evaluates the Qwen2.5-Coder-14B executor on the CodeNetMut dataset.
+
+For other models, use the corresponding checkpoint and replace `qwen_14b` in the result filename with `qwen_7b`, `codellama_7b`, or `codellama_13b`. To evaluate on HumanEval, replace `codenetmut` with `humaneval`.
+
 ```bash
 cd test/execution_semantics
 mkdir -p ../../results/execution_semantics
-python run_executor.py   --executor_model_path ling031001/T-REX-qwen2.5-coder-14b   --results_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"   --data_path "./../../data/test/execution_semantics/codenetmut.jsonl"
-python calculate_ASE.py --result_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"
-python calculate_NS_PS.py --result_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"
-python calculate_stratify_results.py --result_path "./../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl"
+
+python run_executor.py \
+  --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
+  --results_path ../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl \
+  --data_path ../../data/test/execution_semantics/codenetmut.jsonl
+
+python calculate_execution_semantics.py \
+  --result_path ../../results/execution_semantics/qwen_14b_sft_codenetmut.jsonl
 ```
+
+The script reports the following metrics:
+
+- **Table 2:** `A_NS` (next-statement accuracy), `A_PS` (program-state accuracy), and `A_NS+PS` (joint accuracy).
+- **Table 3:** `S1` (expressions), `S2` (variable assignments), `Seq.` (sequential/completion flow), `S3` (if-statements), `S4` (for/while-statements), `S5` (method calls), and `Branch` (branch flow).
+
+The executor uses sampling with `temperature=0.8`. Therefore, results may vary across runs and may not exactly match those reported in the paper.
+
+
+### command Predicting runtime behaviors 
+### Predicting Runtime Behaviors
+
+The following example evaluates the Qwen2.5-Coder-14B executor on the CodeNetMut dataset.
+
+For other models, use the corresponding checkpoint and replace `qwen_14b` in the result path with `qwen_7b`, `codellama_7b`, or `codellama_13b`. To evaluate on HumanEval, replace `codenetmut` with `humaneval`.
+
 ```bash
-for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
-  for dataset in "codenetmut" "humaneval"; do
-    python run_executor.py   --executor_model_path "./../../fine_tuned_models/${model}_sft/checkpoint_xx"   --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"   --data_path "./../../data/test/ASE/${dataset}.jsonl"
-    python calculate_ASE.py --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"
-    python calculate_NS_PS.py --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"
-    python calculate_stratify_results.py --results_path "./../../results/ASE/${model}_sft_${dataset}.jsonl"
-  done
-done
+cd test/runtime_behaviors
+mkdir -p ../../results/runtime_behaviors
+
+python SIPA.py \
+  --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
+  --results_path "../../results/runtime_behaviors/qwen_14b_sft_codenetmut" \
+  --data_path "../../data/test/runtime_behaviors/codenetmut.jsonl" \
+  --variant "sft"
 ```
-### results
-<img width="561" height="227" alt="image" src="https://github.com/user-attachments/assets/9cb69b27-c3ac-4a55-b33f-f6c648e38da8" />
-<img width="561" height="189" alt="image" src="https://github.com/user-attachments/assets/1379e3ae-6cc8-469e-af33-1209bfd02cdb" />
 
+`SIPA.py` saves the predictions to `results.jsonl` and reports the execution-trace metrics: Prefix, $A_{0.5}$, $A_{0.8}$, and $A_{1.0}$.
 
-## RQ2 and RQ5 Predicting runtime behaviors 
-### command
 ```bash
-  for model in "codellama_7b" "codellama_13b" "qwen_7b" "qwen_14b"; do
-    for dataset in "codenetmut" "humaneval"; do
-      python SIPA.py   --executor_model_path "./../../fine_tuned_models/${model}_sft/checkpoint_xx"   --results_path "./../../results/PM_CRMs/${model}_sft_${dataset}"   --data_path "./../../data/test/PM_CRMs/${dataset}.jsonl"   --variant "sft"
-      python calculate_CRMs.py   --result_path "./../../results/PM_CRMs/${model}_sft_${dataset}/results.jsonl"
-    done
-  done
+python calculate_runtime_behaviors.py \
+  --result_path "../../results/runtime_behaviors/qwen_14b_sft_codenetmut/results.jsonl"
 ```
-### results
-<img width="561" height="174" alt="image" src="https://github.com/user-attachments/assets/552b4c3b-3a6d-45df-9bf3-129235398b92" />
-<img width="561" height="228" alt="image" src="https://github.com/user-attachments/assets/6b8b4233-4582-4cd1-b6cf-cdd267201070" />
-<img width="561" height="228" alt="image" src="https://github.com/user-attachments/assets/30f9069f-54ee-4d00-938d-73c429e46b6c" />
 
-
-## RQ3 Static Detection of Runtime Errors
-### command
-```bash
-cd Excep_dect
-python exception_dect.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --excep_data "./../../data/test/Excep_dect/excep.jsonl" --n_excep_data "./../../data/test/Excep_dect/n_excep.jsonl"
-```
-### results
-<img width="286" height="141" alt="image" src="https://github.com/user-attachments/assets/2faadc7a-fcf2-4ab8-9d7b-37986660483d" />
-
-## RQ4 Aiding Debugging
-### command
-```bash
-python SIPA.py   --executor_model_path "./../../fine_tuned_models/qwen_14b_sft/checkpoint_xx"   --results_path "./../../results/Bug_dect/qwen_14b_sft_buggy"   --data_path "./../../data/test/Bug_dect/buggy.jsonl"   --variant "sft"
-```
-### results
-<img width="286" height="114" alt="image" src="https://github.com/user-attachments/assets/2d34629e-92ee-4ccd-bfa2-df35f2eb4b84" />
+`calculate_runtime_behaviors.py` reports the code-coverage metrics (P, R, F1, and $A_{EM}$) and program-output exact-match accuracy ($A_{EM}$). These metrics correspond to the columns in Table 4 of the paper.
