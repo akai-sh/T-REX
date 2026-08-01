@@ -48,21 +48,12 @@ from datasets import load_dataset, load_from_disk
 
 import transformers
 from transformers import (
-    CONFIG_MAPPING,
     MODEL_FOR_CAUSAL_LM_MAPPING,
-    AutoConfig,
-    AutoModelForCausalLM,
-    AutoTokenizer,
     HfArgumentParser,
     Trainer,
-    TrainingArguments,
-    default_data_collator,
-    is_torch_tpu_available,
     set_seed,
 )
-from transformers.testing_utils import CaptureLogger
 from transformers.trainer_utils import get_last_checkpoint
-from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.

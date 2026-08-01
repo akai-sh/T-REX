@@ -3,49 +3,7 @@ import io
 import contextlib
 import re
 import ast
-
-def one_step_execute(prompt,executor,tokenizer,args):
-    if 'llama' in args.executor_model_path or 'Llama' in args.executor_model_path:
-        inputs = tokenizer(
-            [prompt],
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=10240
-        ).to(executor.device)
-    else:
-    # 1.
-        inputs = [
-            tokenizer.apply_chat_template([
-                {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ], add_generation_prompt=True, tokenize=False)
-        ]
-
-        inputs = tokenizer(
-            inputs,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=1024
-        ).to(executor.device)
-
-    outputs = executor.generate(
-        **inputs,
-        max_new_tokens=1024,
-        do_sample=True,
-        temperature=0.8,
-        # num_return_sequences=args.num_sequences,
-    )
-
-    responses = [
-        tokenizer.decode(seq[len(inputs.input_ids[0]):], skip_special_tokens=True)
-        for seq in outputs
-    ]
-
-    assert len(responses)==1
-    return responses[0]
-
+from execute_one_step import one_step_execute
 
 def trace_lines(frame, event, arg):
     global last_lineno
@@ -330,7 +288,7 @@ def add_linenum(code):
         new_lines.append(this_line)
     return new_lines
 
-def gen_prompt_excep(code, cur_line_num, cur_line, cur_states):
+def gen_prompt(code, cur_line_num, cur_line, cur_states):
     prompt = f"""Code:
 {code}
 
@@ -340,33 +298,47 @@ Suppose that the code is going to execute <line {cur_line_num + 1}> statement ({
 Number of subsequent executed statements: 1
 
 Instruction:
-Given the code, current program state, and the values of variables after executing subsequent statements, please analyze each statement's execution WITHIN THE NUMBER of subsequent executed statements. For each statement, first indicate the line number, then describe the variable values after executing this statement or the error, and finally point out the next statement to be executed. If the entire program ends after the statement execution, additionally indicate that the code execution has finished. If the statement encounters an error during execution, analyze its cause and type.
+Given the code, current program state, and the NUMBER of subsequent executed statements, please analyze each statement's execution WITHIN THE NUMBER of subsequent executed statements.
+For each statement, first indicate the line number, then describe the variable values after executing this statement, and finally point out the next statement to be executed. If a statement encounters an error during execution, analyze its cause and type. If the entire program ends after executing a statement, indicate that the code execution has finished.
 Provide your analysis in the following format for each statement:
 Line: [Line number of the executed statement WITHIN execution steps]
 Analysis: [Step-by-step explanation of the execution progress in a single paragraph without Enumeration and Enumeration Symbols]
-Check: [Values of the variables in dictionary format based on the analysis or Error Type without any extra words]
-Next statement:[The line number of the statement to be executed next or the label 'completion' if the entire program ends after the statement execution or label 'error' if  this statement encounters an error]"""
+Check: [Values of the variables in dictionary format based on the analysis if the statement is executable]
+Next statement:[The line number of the statement to be executed next or the error type if the statement encounters any error or the label 'completion' if the entire program ends after the statement execution]"""
     return prompt
 
-def extract_result_excep(result):
-    pattern = r"Line:\s*(\d+)\s*Analysis:[\s\S]*?Check:\s*(.*?)\s*Next statement:\s*(\w+)"
+def gen_prompt_SWA(code, cur_line_num, cur_line, cur_states):
+    prompt = f"""Code:
+{code}
+
+Current program state:
+Suppose that the code is going to execute <line {cur_line_num + 1}> statement ({cur_line.strip()}). The current values of the variables are {cur_states}.
+
+Number of subsequent executed statements: 1
+
+Instruction:
+Given the code, current program state, and the NUMBER of subsequent executed statements, please analyze each statement's execution WITHIN THE NUMBER of subsequent executed statements. 
+For each statement, first indicate the line number, then describe the variable values after executing this statement, and finally point out the next statement to be executed. If a statement encounters an error during execution, indicate its type. If the entire program ends after executing a statement, indicate that the code execution has finished. 
+Provide your answer in the following format for each statement:
+Line: [Line number of the executed statement WITHIN execution steps]
+Check: [Values of the variables in dictionary format based on the analysis if the statement is executable]
+Next statement:[The line number of the statement to be executed next or the error type if the statement encounters any error or the label 'completion' if the entire program ends after the statement execution]"""
+    return prompt
+
+
+def extract_result(result):
+    pattern = r"Line:\s*(\d+)\s*Analysis:.*?Check:\s*({.*?})\s*Next statement:\s*(\d+|\w+)"
     matches = re.findall(pattern, result, re.DOTALL)
     wrong_tag = None
-    if matches == []:
+    if matches is None:
         wrong_tag = 'extrace result error'
-    for match in matches[:1]:
-        if '{' in match[1]:
-            try:
-                cur_states = ast.literal_eval(match[1])
-            except:
-                wrong_tag = 'extrace result error'
-        else:
-            cur_states = match[1]
-
+    for match in matches:
+        try:
+            cur_states = ast.literal_eval(match[1])
+        except:
+            wrong_tag = 'extrace result error'
         if match[2] == 'completion' or match[2] == 'Completion':
             cur_line_num = 'completion'
-        elif match[2] == 'error':
-            cur_line_num = 'error'
         else:
             try:
                 cur_line_num = int(match[2])
@@ -374,7 +346,28 @@ def extract_result_excep(result):
                 wrong_tag = 'extrace result error'
     if wrong_tag == 'extrace result error' or wrong_tag =='match error: extrace_result':
         return -1, -1, wrong_tag
+    return cur_line_num, cur_states, None
 
+def extract_result_SWA(result):
+    pattern = r"Line:\s*(\d+)\s*Check:\s*({.*?})\s*Next statement:\s*(\d+|\w+)"
+    matches = re.findall(pattern, result, re.DOTALL)
+    wrong_tag = None
+    if matches == []:
+        wrong_tag = 'extrace result error'
+    for match in matches:
+        try:
+            cur_states = ast.literal_eval(match[1])
+        except:
+            wrong_tag = 'extrace result error'
+        if match[2] == 'completion' or match[2] == 'Completion':
+            cur_line_num = 'completion'
+        else:
+            try:
+                cur_line_num = int(match[2])
+            except:
+                wrong_tag = 'extrace result error'
+    if wrong_tag == 'extrace result error' or wrong_tag =='match error: extrace_result':
+        return -1, -1, wrong_tag
     return cur_line_num, cur_states, None
 
 
@@ -455,7 +448,7 @@ def find_first_matching_function(code: str, func_list: list):
     else:
         return None,wrong_flg,wrong_info
 
-def program_execute(item ,executor,tokenizer,args):
+def program_execute(item ,executor,reward_model,rf_model,tokenizer,tokenizer_qwen,args):
     # trace
     trace = []
 
@@ -542,10 +535,15 @@ def program_execute(item ,executor,tokenizer,args):
                 error_info = e
                 break
         else:
-            prompt = gen_prompt_excep(formatted_code, cur_line_num, cur_line, cur_states)
-
+            if args.variant=='swa':
+                prompt = gen_prompt_SWA(formatted_code, cur_line_num, cur_line, cur_states)
+            else:
+                prompt = gen_prompt(formatted_code, cur_line_num, cur_line, cur_states)
             response = one_step_execute(prompt, executor, tokenizer, args)
-            cur_line_num, cur_states, wrong_tag = extract_result_excep(response)
+            if args.variant == 'swa':
+                cur_line_num, cur_states, wrong_tag = extract_result_SWA(response)
+            else:
+                cur_line_num, cur_states, wrong_tag = extract_result(response)
 
             if wrong_tag:
                 error = wrong_tag
@@ -586,39 +584,38 @@ def program_execute(item ,executor,tokenizer,args):
         finished=False
         return trace, finished, error,error_info,output
 
-def calculate_fp_tn(items):
+
+def calculate_prefix_match(items):
     
+    prefixs = 0
+    sums = 0
     num = 0
+    num_50 = 0
+    num_80 = 0
     num_completion = 0
+
     for item in items:
+
         true_trace_len = item.get('true_trace_len', 1)
         execute_correct = item.get('execute_correct', 0)
+
+        if execute_correct >= (true_trace_len * 0.5):
+            num_50 += 1
+        if execute_correct >= (true_trace_len * 0.8):
+            num_80 += 1
         if execute_correct >= true_trace_len:
             num_completion += 1
+
+        prefix = execute_correct / true_trace_len if true_trace_len else 0
+        prefixs += prefix
+        sums += true_trace_len
         num += 1
-    fp=num-num_completion
-    tn=num_completion
 
-    return  fp, tn
+    avg_prefix = prefixs / num
+    ratio_50 = num_50 / num
+    ratio_80 = num_80 / num
+    ratio_completion = num_completion / num
 
-def calculate_tp_fn(items):
-    num = 0
-    num_true = 0
-    for item in items:
-        agent_trace=item['agent_trace']
-        true_trace_len = item.get('true_trace_len', 1)
-        execute_correct = item.get('execute_correct', 0)
-        if agent_trace[-1]['line']=='error' and agent_trace[-2]['line']==item['error_line']-1 and item['error_type'] in agent_trace[-2]['program_states']:
-            if execute_correct>=true_trace_len:
-                num_true+=1
-        num += 1
-    fn = num - num_true
-    tp = num_true
-
-    return tp, fn
-
-
-
-
+    return avg_prefix, ratio_50, ratio_80, ratio_completion
 
 

@@ -20,6 +20,12 @@ parser.add_argument("--rf_model_path",
                     default='',
                     type=str)
 parser.add_argument("--num_sequences", default=32, type=int)
+parser.add_argument(
+                    "--max_samples", "--num_examples",
+                    dest="max_samples",
+                    default=None,
+                    type=int,
+                    help="Only run the first N examples (default: all examples).")
 parser.add_argument("--results_path",
                     default='', type=str,
                     help="The output directory where the model predictions and checkpoints will be written.")
@@ -30,6 +36,8 @@ parser.add_argument("--variant",
                     default='', type=str,choices=["sft", "rvbs", "swa"])
 
 args = parser.parse_args()
+if args.max_samples is not None and args.max_samples <= 0:
+    parser.error("--max_samples must be a positive integer")
 print(args.executor_model_path)
 print(args.reward_model_path)
 print(args.rf_model_path)
@@ -90,6 +98,8 @@ executed_items = []
 # run executor with SIPA
 with open(args.data_path, 'r') as f,open(args.results_path+'/results.jsonl','w')as w:
     lines = f.readlines()
+    if args.max_samples is not None:
+        lines = lines[:args.max_samples]
 
     for i, line in tqdm(enumerate(lines), desc="Processing"):
         item = json.loads(line)
@@ -107,15 +117,15 @@ with open(args.data_path, 'r') as f,open(args.results_path+'/results.jsonl','w')
             w.write(json_line + '\n')
             executed_items.append(item)
 
-        except:
-            continue
+        except Exception as exc:
+            raise RuntimeError(f"Failed to process item {i}") from exc
 
 # calculate prefix match
 trace_output = []
 trace_dicts = []
 traced_functions = set()
 
-for i, js in enumerate(executed_items):
+for item_index, js in enumerate(executed_items):
     try:
         trace_output, wrong_flg, error_type, wrong_lineno = execute_code_with_trace(js['code'])
         trace_output = parse_trace(trace_output)[1]
@@ -134,10 +144,10 @@ for i, js in enumerate(executed_items):
         def_lines = []
         for func in js['func_info'].keys():
             def_lines.append(f'def {func}(')
-        for i, line in enumerate(js['code'].split('\n')):
+        for line_index, line in enumerate(js['code'].split('\n')):
             for def_line in def_lines:
                 if def_line in line:
-                    no_check_lines.append(i)
+                    no_check_lines.append(line_index)
         # print(no_check_lines)
 
         execute_correct = 1
@@ -152,12 +162,13 @@ for i, js in enumerate(executed_items):
                 execute_correct += 1
             else:
                 break
-        print(execute_correct)
         js['execute_correct'] = execute_correct
         jl = json.dumps(js)
 
-    except Exception as e:
-        continue
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to evaluate trace for item {item_index}"
+        ) from exc
 
 # calculate_prefix_match
 avg_prefix, ratio_50, ratio_80, ratio_completion=calculate_prefix_match(executed_items)
@@ -166,4 +177,3 @@ print(f"Prefix: {avg_prefix}")
 print(f"Completion 50%: {ratio_50}")
 print(f"Completion 80%: {ratio_80}")
 print(f"Completion : {ratio_completion}")
-

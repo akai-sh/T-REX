@@ -205,7 +205,7 @@ def main() -> None:
     task = load_task(task_path, args.task_index)
 
     print(f"Loaded task_id={task.get('task_id')} from {task_path}")
-    print("Normalized task code:")
+    print("Task code:")
     print(task["code"].rstrip())
     print(f"Loading executor model: {args.executor_model_path}")
     model, tokenizer = load_executor(args.executor_model_path, args.torch_dtype)
