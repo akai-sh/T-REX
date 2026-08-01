@@ -7,8 +7,20 @@ conda activate llmexecutor
 cd T-REX
 pip install -r requirements.txt
 ```
-## prepare data
-Please download the dataset from [here](https://drive.google.com/drive/folders/1mdfxpxl_PNjpo_cbHBQlQ7tQLmfJW55W?usp=drive_link) and place the `data` folder inside the `T-REX` folder 
+## Prepare data
+
+Run the following commands from the `T-REX` root directory:
+
+```bash
+pip install gdown==5.2.2
+gdown --continue 1TYCVFsQLBsORvThXRI0yAJ8NR3SYpO7M -O trex-data-v1.0.tar.gz
+echo "0d92691e4ec0a7d0144b0168215340421703bfa715962225c75cbe6c002580ec  trex-data-v1.0.tar.gz" | sha256sum -c -
+tar -xzf trex-data-v1.0.tar.gz -C .
+```
+
+Alternatively, download `trex-data-v1.0.tar.gz` manually from [Google Drive](https://drive.google.com/file/d/1TYCVFsQLBsORvThXRI0yAJ8NR3SYpO7M/view?usp=drive_link), verify its SHA-256 checksum, and extract it into the `T-REX` root directory.
+
+The extracted dataset should be located at `T-REX/data/`.
 
 ## Kick-the-Tires Test
 
