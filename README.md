@@ -10,7 +10,69 @@ pip install -r requirements.txt
 ## prepare data
 Please download the dataset from [here](https://drive.google.com/drive/folders/1mdfxpxl_PNjpo_cbHBQlQ7tQLmfJW55W?usp=drive_link) and place the `data` folder inside the `T-REX` folder 
 
-## kick-the-tires Test
+## Kick-the-Tires Test
+
+We provide a lightweight smoke test to verify that the artifact is installed correctly and that the T-REX executor produces the expected result.
+
+### Test Example
+
+The smoke test uses the following program:
+
+```python
+def f(x, a, b):
+    ma = min(a, b)
+    mi = max(0, a + b - x)
+    return (ma, mi)
+
+f(10, 7, 5)
+```
+
+The expected return value is:
+
+```text
+(5, 2)
+```
+
+### Expected Output
+
+After running the kick-the-tires test, the output should look similar to the following:
+
+```text
+Loaded task_id=1623 from .../test/kick_the_tires_example.jsonl
+
+Task code:
+def f(x,a,b):
+    ma  = min(a,b)
+    mi = max(0,a+b-x)
+    return (ma,mi)
+f(10,7,5,)
+
+Loading executor model: ling031001/T-REX-qwen2.5-coder-14b
+Running T-REX executor on entry point: f
+
+Effective executor trace:
+...
+
+Final executor output:
+...
+
+Return expression: (5, 2)
+Observed output: (5, 2)
+Effective trace steps: 2
+Kick-the-Tires passed.
+```
+
+### Success Criteria
+
+The key lines to verify are:
+
+```text
+Return expression: (5, 2)
+Observed output: (5, 2)
+Kick-the-Tires passed.
+```
+
+If these lines appear, the artifact has passed the kick-the-tires sanity test.
 
 ## Training
 
