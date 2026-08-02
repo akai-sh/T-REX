@@ -188,3 +188,17 @@ python calculate_runtime_behaviors.py \
 ```
 
 `calculate_runtime_behaviors.py` reports the code-coverage metrics (P, R, F1, and $A_{EM}$) and program-output exact-match accuracy ($A_{EM}$). These metrics correspond to the columns in Table 4 of the paper.
+
+### Exception Detection
+
+```bash
+cd exception_decttion
+
+python exception_dect.py \
+  --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
+  --excep_data "../../data/test/exception_decttion/excep.jsonl" \
+  --n_excep_data "../../data/test/exception_decttion/n_excep.jsonl"
+```
+
+`exception_dect.py` reports TP, FP, TN, and FN. These metrics correspond to the columns in Table 6 of the paper.
+
