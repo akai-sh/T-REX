@@ -14,7 +14,7 @@ Run the following commands from the `T-REX` root directory:
 ```bash
 pip install gdown==5.2.2
 gdown --continue 1TYCVFsQLBsORvThXRI0yAJ8NR3SYpO7M -O trex-data-v1.0.tar.gz
-echo "0d92691e4ec0a7d0144b0168215340421703bfa715962225c75cbe6c002580ec  trex-data-v1.0.tar.gz" | sha256sum -c -
+echo "2949a4b3590e5b7dc752b4b55e72a77c5eb41418d4bad4db2ef819337f99a99b  trex-data-v1.0.tar.gz" | sha256sum -c -
 tar -xzf trex-data-v1.0.tar.gz -C .
 ```
 
