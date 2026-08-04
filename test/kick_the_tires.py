@@ -22,7 +22,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 DEFAULT_MODEL = "ling031001/T-REX-qwen2.5-coder-14b"
 DEFAULT_TASK_PATH = Path(__file__).with_name("kick_the_tires_example.jsonl")
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PM_CRMS_DIR = PROJECT_ROOT / "test" / "PM_CRMs"
+PM_CRMS_DIR = PROJECT_ROOT / "test" / "runtime_behaviors"
 
 
 def parse_args() -> argparse.Namespace:
