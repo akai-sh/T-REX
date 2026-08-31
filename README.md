@@ -192,7 +192,7 @@ python calculate_runtime_behaviors.py \
 ### Exception Detection
 
 ```bash
-cd exception_decttion
+cd exception_detection
 
 python exception_dect.py \
   --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
