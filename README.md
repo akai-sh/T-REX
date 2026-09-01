@@ -218,9 +218,9 @@ To calculate the metrics from saved predictions:
 python exception_dect.py \
   --excep_result_path result_excep.jsonl \
   --n_excep_result_path result_no_excep.jsonl
-
-`exception_dect.py` reports TP, FP, TN, and FN. These metrics correspond to the columns in Table 6 of the paper.
 ```
+`exception_dect.py` reports TP, FP, TN, and FN. These metrics correspond to the columns in Table 6 of the paper.
+
 
 #### Fault Localization
 To rerun the model and save the predictions:
