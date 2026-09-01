@@ -238,5 +238,6 @@ To calculate the metric from saved predictions:
 python bug_dect.py \
   --buggy_data ../../data/test/exception_decttion/buggy.jsonl \
   --saved_result_path ../../results/exception_detection/result_buggy.jsonl
-bug_dect.py reports root-cause localization accuracy in Table 7.
 ```
+bug_dect.py reports root-cause localization accuracy in Table 7.
+
