@@ -134,7 +134,7 @@ python binarize_data.py --input_path ./../../data/train/sft_formated_qwen.jsonl 
 # Qwen2.5-Coder-7b
 python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_7b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --eval_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True
 # Qwen2.5-Coder-14b
-python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    -- "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
+python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    --eval_strategy "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
 
 ### Generating Execution Rationales
@@ -207,7 +207,6 @@ For other models, use the corresponding checkpoint and replace `qwen_14b` in the
 
 ```bash
 cd test/runtime_behaviors
-mkdir -p ../../results/runtime_behaviors
 
 python SIPA.py \
   --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
@@ -235,12 +234,11 @@ python calculate_ic_score.py \
 To rerun the model and save the predictions:
 ```bash
 cd test/exception_detection
-mkdir -p ../../results/exception_detection
 
 python exception_dect.py \
   --executor_model_path ling031001/T-REX-qwen2.5-coder-14b-excep \
-  --excep_data ../../data/test/exception_decttion/excep.jsonl \
-  --n_excep_data ../../data/test/exception_decttion/n_excep.jsonl \
+  --excep_data ../../data/test/exception_detection/excep.jsonl \
+  --n_excep_data ../../data/test/exception_detection/n_excep.jsonl \
   --excep_result_output result_excep.jsonl \
   --n_excep_result_output result_no_excep.jsonl
 ```
@@ -260,7 +258,7 @@ To rerun the model and save the predictions:
 cd test/exception_detection
 
 python bug_dect.py \
-  --buggy_data ../../data/test/exception_decttion/buggy.jsonl \
+  --buggy_data ../../data/test/exception_detection/buggy.jsonl \
   --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
   --result_output result_buggy.jsonl
 ```
@@ -268,7 +266,7 @@ python bug_dect.py \
 To calculate the metric from saved predictions:
 ```bash
 python bug_dect.py \
-  --buggy_data ../../data/test/exception_decttion/buggy.jsonl \
+  --buggy_data ../../data/test/exception_detection/buggy.jsonl \
   --saved_result_path result_buggy.jsonl
 ```
 bug_dect.py reports root-cause localization accuracy in Table 7.
