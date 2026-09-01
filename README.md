@@ -137,6 +137,19 @@ python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-7B-Instruct   
 python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct    --data_path ./../../data/train/sft_processed_qwen.jsonl.npy     --model_max_length 1280     --output_dir ./../../fine_tuned_models/qwen_14b_sft     --num_train_epochs 5     --per_device_train_batch_size 1    -- "no"     --save_strategy "steps"     --save_steps 50     --save_total_limit 1000    --learning_rate 1e-5    --weight_decay 0.0    --warmup_steps 100    --lr_scheduler_type "cosine"     --logging_strategy "steps"    --logging_steps 1     --report_to "none"     --bf16 False    --tf32 False     --fp16 True     --truncate_source True 
 ```
 
+### Generating Execution Rationales
+
+The following script uses the teacher model to generate execution rationales for the training data. Set the `OPENAI_API_KEY` environment variable before running it.
+
+```bash
+export OPENAI_API_KEY="your-api-key"
+
+python train/generate_program_explanations.py \
+  --input_path data/train/train.jsonl \
+  --output_path data/train/train_gpt4omini.jsonl \
+  --model gpt-4o-mini
+```
+
 ## Evaluation Instructions 
 ### Training-Data Statistics (Table 1)
 
@@ -260,3 +273,18 @@ python bug_dect.py \
 ```
 bug_dect.py reports root-cause localization accuracy in Table 7.
 
+### Output Prediction
+The following example directly prompts the fine-tuned Qwen2.5-Coder-14B model to predict program outputs on CodeNetMut. This experiment corresponds to Table 5.
+
+```bash
+cd test/output_prediction
+
+python run_output_prediction.py \
+  --model_path ling031001/T-REX-qwen2.5-coder-14b \
+  --data_path ../../data/test/output_prediction/codenetmut_test.jsonl \
+  --result_path qwen_14b_sft_codenetmut.jsonl \
+  --batch_size 8
+
+python calculate_output_prediction.py \
+  --result_path qwen_14b_sft_codenetmut.jsonl
+```
