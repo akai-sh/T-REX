@@ -138,6 +138,15 @@ python train_qwen.py     --model_name_or_path  Qwen/Qwen2.5-Coder-14B-Instruct  
 ```
 
 ## Evaluation Instructions 
+### Training-Data Statistics (Table 1)
+
+```bash
+python train/statistics.py \
+  --train_data data/train/train.jsonl \
+  --train_excep_data data/train/train_excep.jsonl
+```
+statistics.py reports the statement-type and exception-type distributions shown in Table 1.
+
 ### Predicting Execution Semantics
 
 The following example evaluates the Qwen2.5-Coder-14B executor on the CodeNetMut dataset.
@@ -189,16 +198,45 @@ python calculate_runtime_behaviors.py \
 
 `calculate_runtime_behaviors.py` reports the code-coverage metrics (P, R, F1, and $A_{EM}$) and program-output exact-match accuracy ($A_{EM}$). These metrics correspond to the columns in Table 4 of the paper.
 
-### Exception Detection
-
+### Exception Detection and Fault Localization
+## Exception Detection
+To rerun the model and save the predictions:
 ```bash
-cd exception_detection
+cd test/exception_detection
+mkdir -p ../../results/exception_detection
 
 python exception_dect.py \
-  --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
-  --excep_data "../../data/test/exception_decttion/excep.jsonl" \
-  --n_excep_data "../../data/test/exception_decttion/n_excep.jsonl"
+  --executor_model_path ling031001/T-REX-qwen2.5-coder-14b-excep \
+  --excep_data ../../data/test/exception_decttion/excep.jsonl \
+  --n_excep_data ../../data/test/exception_decttion/n_excep.jsonl \
+  --excep_result_output result_excep.jsonl \
+  --n_excep_result_output result_no_excep.jsonl
 ```
 
-`exception_dect.py` reports TP, FP, TN, and FN. These metrics correspond to the columns in Table 6 of the paper.
+To calculate the metrics from saved predictions:
+```bash
+python exception_dect.py \
+  --excep_result_path result_excep.jsonl \
+  --n_excep_result_path result_no_excep.jsonl
 
+`exception_dect.py` reports TP, FP, TN, and FN. These metrics correspond to the columns in Table 6 of the paper.
+```
+
+## Fault Localization
+To rerun the model and save the predictions:
+```bash
+cd test/exception_detection
+
+python bug_dect.py \
+  --buggy_data ../../data/test/exception_decttion/buggy.jsonl \
+  --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
+  --result_output ../../results/exception_detection/result_buggy.jsonl
+```
+
+To calculate the metric from saved predictions:
+```bash
+python bug_dect.py \
+  --buggy_data ../../data/test/exception_decttion/buggy.jsonl \
+  --saved_result_path ../../results/exception_detection/result_buggy.jsonl
+bug_dect.py reports root-cause localization accuracy in Table 7.
+```
