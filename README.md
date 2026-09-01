@@ -262,7 +262,7 @@ cd test/exception_detection
 python bug_dect.py \
   --buggy_data ../../data/test/exception_decttion/buggy.jsonl \
   --executor_model_path ling031001/T-REX-qwen2.5-coder-14b \
-  --result_output ../../results/exception_detection/result_buggy.jsonl
+  --result_output result_buggy.jsonl
 ```
 
 To calculate the metric from saved predictions:
