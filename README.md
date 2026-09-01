@@ -199,7 +199,7 @@ python calculate_runtime_behaviors.py \
 `calculate_runtime_behaviors.py` reports the code-coverage metrics (P, R, F1, and $A_{EM}$) and program-output exact-match accuracy ($A_{EM}$). These metrics correspond to the columns in Table 4 of the paper.
 
 ### Exception Detection and Fault Localization
-## Exception Detection
+#### Exception Detection
 To rerun the model and save the predictions:
 ```bash
 cd test/exception_detection
@@ -222,7 +222,7 @@ python exception_dect.py \
 `exception_dect.py` reports TP, FP, TN, and FN. These metrics correspond to the columns in Table 6 of the paper.
 ```
 
-## Fault Localization
+#### Fault Localization
 To rerun the model and save the predictions:
 ```bash
 cd test/exception_detection
@@ -237,7 +237,7 @@ To calculate the metric from saved predictions:
 ```bash
 python bug_dect.py \
   --buggy_data ../../data/test/exception_decttion/buggy.jsonl \
-  --saved_result_path ../../results/exception_detection/result_buggy.jsonl
+  --saved_result_path result_buggy.jsonl
 ```
 bug_dect.py reports root-cause localization accuracy in Table 7.
 
