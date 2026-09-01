@@ -348,32 +348,99 @@ Check: [Values of the variables in dictionary format based on the analysis or Er
 Next statement:[The line number of the statement to be executed next or the label 'completion' if the entire program ends after the statement execution or label 'error' if  this statement encounters an error]"""
     return prompt
 
+
+def gen_prompt_normal(code, cur_line_num, cur_line, cur_states):
+    prompt = f"""Code:
+{code}
+
+Current program state:
+Suppose that the code is going to execute <line {cur_line_num + 1}> statement ({cur_line.strip()}). The current values of the variables are {cur_states}.
+
+Number of subsequent executed statements: 1
+
+Instruction:
+Given the code, current program state, and the NUMBER of subsequent executed statements, please analyze each statement's execution WITHIN THE NUMBER of subsequent executed statements.
+For each statement, first indicate the line number, then describe the variable values after executing this statement, and finally point out the next statement to be executed. If a statement encounters an error during execution, analyze its cause and type. If the entire program ends after executing a statement, indicate that the code execution has finished.
+Provide your analysis in the following format for each statement:
+Line: [Line number of the executed statement WITHIN execution steps]
+Analysis: [Step-by-step explanation of the execution progress in a single paragraph without Enumeration and Enumeration Symbols]
+Check: [Values of the variables in dictionary format based on the analysis if the statement is executable]
+Next statement:[The line number of the statement to be executed next or the error type if the statement encounters any error or the label 'completion' if the entire program ends after the statement execution]"""
+    return prompt
+
+
 def extract_result_excep(result):
+    pattern = (
+        r"Line:\s*(\d+)\s*"
+        r"Analysis:[\s\S]*?"
+        r"Check:\s*(.*?)\s*"
+        r"Next statement:\s*([^\r\n]+)"
+    )
+    match = re.search(pattern, result, re.IGNORECASE | re.DOTALL)
+    if match is None:
+        return -1, -1, 'extract result error: required fields not found'
+
+    _, check, next_statement = match.groups()
+    check = check.strip().replace('`', '')
+    if '{' in check:
+        try:
+            cur_states = ast.literal_eval(check)
+        except (SyntaxError, ValueError) as exc:
+            return -1, -1, f'extract result error: invalid Check field: {exc}'
+    else:
+        cur_states = check
+
+    next_statement = next_statement.strip().strip('`').rstrip('.').strip()
+    if next_statement.lower() == 'completion':
+        cur_line_num = 'completion'
+    elif next_statement.lower() == 'error' or next_statement.endswith('Error'):
+        cur_line_num = 'error'
+        if not cur_states:
+            cur_states = next_statement
+    else:
+        line_match = re.fullmatch(
+            r'(?:line\s*)?<?(\d+)>?',
+            next_statement,
+            re.IGNORECASE,
+        )
+        if line_match is None:
+            return (
+                -1,
+                -1,
+                'extract result error: invalid Next statement field: '
+                f'{next_statement!r}',
+            )
+        cur_line_num = int(line_match.group(1))
+
+    return cur_line_num, cur_states, None
+
+
+def extract_result_normal(result):
     pattern = r"Line:\s*(\d+)\s*Analysis:[\s\S]*?Check:\s*(.*?)\s*Next statement:\s*(\w+)"
     matches = re.findall(pattern, result, re.DOTALL)
-    wrong_tag = None
-    if matches == []:
-        wrong_tag = 'extrace result error'
-    for match in matches[:1]:
-        if '{' in match[1]:
-            try:
-                cur_states = ast.literal_eval(match[1])
-            except:
-                wrong_tag = 'extrace result error'
-        else:
-            cur_states = match[1]
+    if not matches:
+        return -1, -1, 'extrace result error'
 
-        if match[2] == 'completion' or match[2] == 'Completion':
-            cur_line_num = 'completion'
-        elif match[2] == 'error':
-            cur_line_num = 'error'
-        else:
-            try:
-                cur_line_num = int(match[2])
-            except:
-                wrong_tag = 'extrace result error'
-    if wrong_tag == 'extrace result error' or wrong_tag =='match error: extrace_result':
-        return -1, -1, wrong_tag
+    _, check, next_statement = matches[0]
+    if '{' in check:
+        try:
+            cur_states = ast.literal_eval(check.replace('`', ''))
+        except (SyntaxError, ValueError):
+            return -1, -1, 'extrace result error'
+    else:
+        cur_states = check.strip().replace('`', '')
+
+    if next_statement.lower() == 'completion':
+        cur_line_num = 'completion'
+    elif next_statement.lower() == 'error' or next_statement.endswith('Error'):
+        cur_line_num = 'error'
+        if not cur_states:
+            cur_states = next_statement
+    else:
+        try:
+            cur_line_num = int(next_statement)
+        except ValueError:
+            return -1, -1, 'extrace result error'
 
     return cur_line_num, cur_states, None
 
@@ -445,6 +512,8 @@ def find_first_matching_function(code: str, func_list: list):
                     func_name = node.func.id  # 普通函数名
                 elif isinstance(node.func, ast.Attribute):
                     func_name = node.func.attr  # 对象方法名
+                else:
+                    continue
                 func_names.append(func_name)
                 # 如果函数名在给定的函数名列表中，返回第一个匹配的函数
         for fn in func_names[::-1]:
@@ -455,7 +524,7 @@ def find_first_matching_function(code: str, func_list: list):
     else:
         return None,wrong_flg,wrong_info
 
-def program_execute(item ,executor,tokenizer,args):
+def program_execute(item, executor, tokenizer, args, prompt_mode='exception'):
     # trace
     trace = []
 
@@ -463,7 +532,7 @@ def program_execute(item ,executor,tokenizer,args):
     codes = code.split('\n')
     formatted_code = '\n'.join(add_linenum(code))
 
-    cur_line_num = len(codes)-2
+    cur_line_num = item['exe_start'] - 1
     cur_line = codes[cur_line_num]
     trace.append({'line': 0, 'program_states': {}})
     trace.append({'line': cur_line_num})
@@ -473,7 +542,6 @@ def program_execute(item ,executor,tokenizer,args):
     # stack
     stack = [{'line': cur_line_num, 'program_states': cur_states.copy()}]
 
-    entry_func_name = item['entry_point']
     funcs = item['func_info']
 
     error = None
@@ -482,13 +550,20 @@ def program_execute(item ,executor,tokenizer,args):
     output = None
 
     # start execute
-    while 'completion' != cur_line_num and len(trace)<item['ans_len']+10:
+    while (
+        cur_line_num not in ('completion', 'error')
+        and len(trace) < item['ans_len'] + 10
+    ):
 
         func_tag = False
         func_name,wrong_tag,wrong_info = find_first_matching_function(cur_line,funcs.keys())
         if wrong_tag==False:
             error = "find_first_matching_function error"
-            error_info = {'cur_line':cur_line,'funcs':funcs.keys(),'wrong_info':wrong_info}
+            error_info = {
+                'cur_line': cur_line,
+                'funcs': list(funcs.keys()),
+                'wrong_info': wrong_info,
+            }
             break
 
         if func_name:
@@ -525,6 +600,16 @@ def program_execute(item ,executor,tokenizer,args):
                 return_state = cur_line.replace('return ', '').strip()
                 return_result = eval(return_state, {}, stack[-1]['program_states'])
 
+                if len(stack) == 1:
+                    cur_line_num = 'completion'
+                    output = {
+                        'cur_line': str(return_result),
+                        'code': '\n'.join(codes),
+                    }
+                    trace[-1]['program_states'] = cur_states.copy()
+                    trace.append({'line': cur_line_num})
+                    break
+
                 stack.pop()
                 cur_line_num = stack[-1]["line"]
                 cur_line = codes[cur_line_num]
@@ -542,10 +627,27 @@ def program_execute(item ,executor,tokenizer,args):
                 error_info = e
                 break
         else:
-            prompt = gen_prompt_excep(formatted_code, cur_line_num, cur_line, cur_states)
-
+            if prompt_mode == 'normal':
+                prompt = gen_prompt_normal(
+                    formatted_code,
+                    cur_line_num,
+                    cur_line,
+                    cur_states,
+                )
+            elif prompt_mode == 'exception':
+                prompt = gen_prompt_excep(
+                    formatted_code,
+                    cur_line_num,
+                    cur_line,
+                    cur_states,
+                )
+            else:
+                raise ValueError(f'Unknown prompt mode: {prompt_mode!r}')
             response = one_step_execute(prompt, executor, tokenizer, args)
-            cur_line_num, cur_states, wrong_tag = extract_result_excep(response)
+            if prompt_mode == 'normal':
+                cur_line_num, cur_states, wrong_tag = extract_result_normal(response)
+            else:
+                cur_line_num, cur_states, wrong_tag = extract_result_excep(response)
 
             if wrong_tag:
                 error = wrong_tag
@@ -556,6 +658,11 @@ def program_execute(item ,executor,tokenizer,args):
                 output = {'cur_line':cur_line,'code':'\n'.join(codes)}
 
                 trace[-1]['program_states'] = cur_states.copy()
+                trace.append({'line': cur_line_num})
+                break
+
+            if 'error' == cur_line_num:
+                trace[-1]['program_states'] = cur_states
                 trace.append({'line': cur_line_num})
                 break
 
@@ -574,10 +681,14 @@ def program_execute(item ,executor,tokenizer,args):
             cur_line = codes[cur_line_num]
 
 
-    if cur_line_num=='completion' and error==None:
+    if cur_line_num in ('completion', 'error') and error is None:
         finished=True
         return trace, finished, error,error_info,output
-    elif cur_line_num!='completion' and error==None and len(trace)>=item['ans_len']+5:
+    elif (
+        cur_line_num not in ('completion', 'error')
+        and error is None
+        and len(trace) >= item['ans_len'] + 5
+    ):
         finished=False
         error = 'len(trace) >= ans_len'
         error_info = 'len(trace) >= ans_len'
@@ -587,38 +698,43 @@ def program_execute(item ,executor,tokenizer,args):
         return trace, finished, error,error_info,output
 
 def calculate_fp_tn(items):
-    
-    num = 0
     num_completion = 0
     for item in items:
-        true_trace_len = item.get('true_trace_len', 1)
-        execute_correct = item.get('execute_correct', 0)
+        true_trace_len = item['true_trace_len']
+        execute_correct = item['execute_correct']
         if execute_correct >= true_trace_len:
             num_completion += 1
-        num += 1
-    fp=num-num_completion
-    tn=num_completion
-
-    return  fp, tn
+    fp = len(items) - num_completion
+    tn = num_completion
+    return fp, tn
 
 def calculate_tp_fn(items):
-    num = 0
     num_true = 0
     for item in items:
-        agent_trace=item['agent_trace']
-        true_trace_len = item.get('true_trace_len', 1)
-        execute_correct = item.get('execute_correct', 0)
-        if agent_trace[-1]['line']=='error' and agent_trace[-2]['line']==item['error_line']-1 and item['error_type'] in agent_trace[-2]['program_states']:
-            if execute_correct>=true_trace_len:
-                num_true+=1
-        num += 1
-    fn = num - num_true
+        agent_trace = item['agent_trace']
+        true_trace_len = item['true_trace_len']
+        execute_correct = item['execute_correct']
+        detected = False
+        if len(agent_trace) >= 2:
+            predicted_error = agent_trace[-2].get('program_states', '')
+            detected = (
+                agent_trace[-1].get('line') == 'error'
+                and agent_trace[-2].get('line') == item['error_line'] - 1
+                and item['error_type'] in predicted_error
+                and execute_correct >= true_trace_len
+            )
+        if detected:
+            num_true += 1
+    fn = len(items) - num_true
     tp = num_true
-
     return tp, fn
 
 
-
-
-
-
+def calculate_confusion_matrix(exception_items, no_exception_items):
+    tp, fn = calculate_tp_fn(exception_items)
+    fp, tn = calculate_fp_tn(no_exception_items)
+    total = tp + fn + fp + tn
+    if total == 0:
+        raise ValueError('Cannot calculate accuracy for empty result sets.')
+    accuracy = (tp + tn) / total
+    return tp, fn, fp, tn, accuracy

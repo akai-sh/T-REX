@@ -21,7 +21,7 @@ parser.add_argument("--rf_model_path",
                     type=str)
 parser.add_argument("--num_sequences", default=32, type=int)
 parser.add_argument(
-                    "--max_samples", "--num_examples",
+                    "--limit", "--max_samples", "--num_examples",
                     dest="max_samples",
                     default=None,
                     type=int,
@@ -163,7 +163,6 @@ for item_index, js in enumerate(executed_items):
             else:
                 break
         js['execute_correct'] = execute_correct
-        jl = json.dumps(js)
 
     except Exception as exc:
         raise RuntimeError(

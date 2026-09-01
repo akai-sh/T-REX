@@ -438,6 +438,8 @@ def find_first_matching_function(code: str, func_list: list):
                     func_name = node.func.id  # 普通函数名
                 elif isinstance(node.func, ast.Attribute):
                     func_name = node.func.attr  # 对象方法名
+                else:
+                    continue
                 func_names.append(func_name)
                 # 如果函数名在给定的函数名列表中，返回第一个匹配的函数
         for fn in func_names[::-1]:
@@ -617,5 +619,4 @@ def calculate_prefix_match(items):
     ratio_completion = num_completion / num
 
     return avg_prefix, ratio_50, ratio_80, ratio_completion
-
 
