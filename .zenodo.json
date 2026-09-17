@@ -1,0 +1,43 @@
+{
+  "title": "Artifact for T-REX: Teaching Large Language Models to Reason with Verbalized Execution Semantics",
+  "description": "Artifact accompanying the paper T-REX: Teaching Large Language Models to Reason with Verbalized Execution Semantics. It contains the source code, training and evaluation scripts, configurations, and documentation required to reproduce the reported experiments.",
+  "creators": [
+    {
+      "name": "Wang, Yan"
+    },
+    {
+      "name": "Ding, Ling"
+    },
+    {
+      "name": "Sun, Jiechen"
+    },
+    {
+      "name": "Nguyen, Tien N."
+    },
+    {
+      "name": "Wang, Shaohua"
+    },
+    {
+      "name": "Yadavally, Aashish"
+    },
+    {
+      "name": "Xia, Xin"
+    },
+    {
+      "name": "Zheng, Yanan"
+    }
+  ],
+  "version": "1.0.0",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "apache-2.0",
+  "language": "eng",
+  "keywords": [
+    "large language models",
+    "program reasoning",
+    "execution semantics",
+    "software engineering",
+    "artifact evaluation",
+    "reproducibility"
+  ]
+}
